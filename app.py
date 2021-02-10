@@ -3,7 +3,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import datetime
 
-# Data
+# Data - cache para no agilizar el proceso al cambiar los selectores
 @st.cache(allow_output_mutation=True)
 def get_data():
     data = pd.read_json('https://datos.comunidad.madrid/catalogo/dataset/b3d55e40-8263-4c0b-827d-2bb23b5e7bab/resource/907a2df0-2334-4ca7-aed6-0fa199c893ad/download/covid19_tia_zonas_basicas_salud_s.json', orient='split')
@@ -28,7 +28,7 @@ if data is not None:
 
 date = datetime.datetime.now()
 
-# Title
+# Título más presentación de la app; indicaciones de uso
 st.title('Incidencia del covid-19 en Madrid')
 st.markdown('''Con esta aplicación puedes ver facilmente los últimos datos de la incidencia
 del Covid-19 por zonas básicas de Salud de Madrid. En el gráfico puedes comparar las cifras con
@@ -37,12 +37,15 @@ st.markdown('''Utiliza los selectores para elegir la zona. También puedes espec
 para el gráfico.''')
 st.markdown('En un móvil pulse la flecha a la izquierda para ver los selectores.')
 st.markdown('***')
+
+# En caso de problema con el data y/o conexión
 if data is None:
     st.markdown('''Lo sentimos, pero hay un problema con la conexión\n
     Vuelve a intentar más tarde''')
 
-# Sidebar
+# Visualización siempre cuando no hay problema con el data
 if data is not None:
+    # Sidebar
     st.sidebar.title('Elige zona/s para ver los datos')
     zone_selection = st.sidebar.multiselect('Elige zona/s básica/s de salud (máximo 10)', ZBS)
     if len(zone_selection) > 10:
@@ -67,15 +70,15 @@ if data is not None:
     for selection in zone_selection:
         selection_info = most_recent[most_recent['zona_basica_salud'] == selection]
         last_two_weeks = selection_info['tasa_incidencia_acumulada_ultimos_14dias'].values[0]
-        previous_two_weeks = data['tasa_incidencia_acumulada_ultimos_14dias'][(data['fecha_informe'] == DATES[-2]) & (data['zona_basica_salud'] == selection)].values[0]
-        difference = round((last_two_weeks-previous_two_weeks)/previous_two_weeks*100, 1)
+        previous_week = data['tasa_incidencia_acumulada_ultimos_14dias'][(data['fecha_informe'] == DATES[-2]) & (data['zona_basica_salud'] == selection)].values[0]
+        difference = round((last_two_weeks - previous_week) / previous_week * 100, 1)
         change = ''
         if difference > 0:
-            change = f'La incidencia ha subido **{difference}** por cien en las últimas dos semanas.'
+            change = f'La incidencia ha subido **{difference}** por cien en la última semana.'
         elif difference < 0:
-            change = f'La incidencia ha bajado **{abs(difference)}** por cien en las últimas dos semanas.'
+            change = f'La incidencia ha bajado **{abs(difference)}** por cien en la última semana.'
         else:
-            change = 'La incidencia no ha cambiado en las últimas dos semanas.'
+            change = 'La incidencia no ha cambiado en la última semana.'
 
         st.markdown(f'''
         ### {selection}:   (datos del {latest_date})\n
@@ -110,5 +113,7 @@ if data is not None:
     st.pyplot(plt)
 
     st.markdown('Fuente: Comunidad de Madrid')
+
+# Footer 
 st.markdown('***')
 st.markdown(f'por H Makela | Madrid | {date.year}')
