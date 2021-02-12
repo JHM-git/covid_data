@@ -2,6 +2,9 @@ import pandas as pd
 import streamlit as st
 import matplotlib.pyplot as plt
 import datetime
+from bs4 import BeautifulSoup
+import requests
+import re
 
 # Data - cache para no agilizar el proceso al cambiar los selectores
 @st.cache(allow_output_mutation=True)
@@ -13,6 +16,30 @@ try:
     data = get_data()
 except:
     data = None
+
+# Data sobre las zonas con restricciones - cache para agilizar el proceso
+@st.cache
+def restricted_zones():
+    restrictions_url = 'https://www.comunidad.madrid/covid-19'
+    req = requests.get(restrictions_url)
+    soup = BeautifulSoup(req.text, 'html.parser')
+    search = soup.find_all(string=re.compile("ZBS "))
+    date = soup.find_all(string=re.compile(" 2021"))
+    # El punto de división entre zonas de Madrid y de otros municipios (para uso futuro)
+    list_divider = re.search('\d', search[0])
+    list_divider = int(list_divider.group(0))
+    restrictions_str = ''.join(search)
+    zbs_restrictions = re.findall(r"ZBS.+?(?=[\;\,\(\)Z])", restrictions_str)
+    zbs_restrictions = [zbs[4:].strip() for zbs in zbs_restrictions]
+    zbs_restrictions = [zbs[:-1].rstrip() if zbs[-1] == 'y' else zbs for zbs in zbs_restrictions]
+    return zbs_restrictions, date[0]
+
+
+try:
+    zbs_restrictions, restrictions_date = restricted_zones()
+except:
+    zbs_restrictions, restrictions_date = [], None 
+
 
 if data is not None:
     ZBS = pd.unique(data['zona_basica_salud'])
@@ -31,7 +58,7 @@ date = datetime.datetime.now()
 # Título más presentación de la app; indicaciones de uso
 st.title('Incidencia del covid-19 en Madrid')
 st.markdown('''Con esta aplicación puedes ver facilmente los últimos datos de la incidencia
-del Covid-19 por zonas básicas de Salud de Madrid. En el gráfico puedes comparar las cifras con
+del Covid-19 por zonas básicas de Salud de Madrid, y si hay restricciones en vigor en la zona. En el gráfico puedes comparar las cifras con
 otras zonas y con la media entre las zonas.''')
 st.markdown('''Utiliza los selectores para elegir la zona. También puedes especificar fechas 
 para el gráfico.''')
@@ -79,9 +106,13 @@ if data is not None:
             change = f'La incidencia ha bajado **{abs(difference)}** por cien en la última semana.'
         else:
             change = 'La incidencia no ha cambiado en la última semana.'
-
+        if selection in zbs_restrictions:
+            restrictions = f'**Restricciones** de entradas y salidas en vigor en la semana del {restrictions_date}\n'
+        else:
+            restrictions = ''
         st.markdown(f'''
         ### {selection}:   (datos del {latest_date})\n
+        {restrictions}
         Casos en las últimas dos semanas: **{int(selection_info['casos_confirmados_ultimos_14dias'].values[0])}**\n
         Casos por cien mil habitantes en las últimas dos semanas: **{round(selection_info['tasa_incidencia_acumulada_ultimos_14dias'].values[0], 2)}**\n
         Casos confirmados desde mayo de 2020: **{int(selection_info['casos_confirmados_totales'].values[0])}**\n
@@ -90,6 +121,7 @@ if data is not None:
         ***
         '''
         )
+        
 
     # Gráfico
     st.header('Evolución de la incidencia')
