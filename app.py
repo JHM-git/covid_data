@@ -6,16 +6,11 @@ from bs4 import BeautifulSoup
 import requests
 import re
 
-# Data - cache para no agilizar el proceso al cambiar los selectores
+# Data - cache para agilizar el proceso al cambiar los selectores
 @st.cache(allow_output_mutation=True)
 def get_data():
     data = pd.read_json('https://datos.comunidad.madrid/catalogo/dataset/b3d55e40-8263-4c0b-827d-2bb23b5e7bab/resource/907a2df0-2334-4ca7-aed6-0fa199c893ad/download/covid19_tia_zonas_basicas_salud_s.json', orient='split')
     return data
-
-try:
-    data = get_data()
-except:
-    data = None
 
 # Data sobre las zonas con restricciones - cache para agilizar el proceso
 @st.cache
@@ -34,12 +29,25 @@ def restricted_zones():
     zbs_restrictions = [zbs[:-1].rstrip() if zbs[-1] == 'y' else zbs for zbs in zbs_restrictions]
     return zbs_restrictions, date[0]
 
+# Título más presentación de la app; indicaciones de uso
+st.title('Incidencia del covid-19 en Madrid')
+st.markdown('''Con esta aplicación puedes ver facilmente los últimos datos de la incidencia
+del Covid-19 por zonas básicas de Salud de Madrid, y si hay restricciones en vigor en la zona. En el gráfico puedes comparar las cifras con
+otras zonas y con la media entre las zonas.''')
+st.markdown('''Utiliza los selectores para elegir la zona. También puedes especificar fechas 
+para el gráfico.''')
+st.markdown('En un móvil pulse la flecha a la izquierda para ver los selectores.')
+st.markdown('***')
 
+# Recuperación de los datos y su procesamiento
+try:
+    data = get_data()
+except:
+    data = None
 try:
     zbs_restrictions, restrictions_date = restricted_zones()
 except:
     zbs_restrictions, restrictions_date = [], None 
-
 
 if data is not None:
     ZBS = pd.unique(data['zona_basica_salud'])
@@ -55,16 +63,6 @@ if data is not None:
 
 date = datetime.datetime.now()
 
-# Título más presentación de la app; indicaciones de uso
-st.title('Incidencia del covid-19 en Madrid')
-st.markdown('''Con esta aplicación puedes ver facilmente los últimos datos de la incidencia
-del Covid-19 por zonas básicas de Salud de Madrid, y si hay restricciones en vigor en la zona. En el gráfico puedes comparar las cifras con
-otras zonas y con la media entre las zonas.''')
-st.markdown('''Utiliza los selectores para elegir la zona. También puedes especificar fechas 
-para el gráfico.''')
-st.markdown('En un móvil pulse la flecha a la izquierda para ver los selectores.')
-st.markdown('***')
-
 # En caso de problema con el data y/o conexión
 if data is None:
     st.markdown('''Lo sentimos, pero hay un problema con la conexión\n
@@ -78,11 +76,10 @@ if data is not None:
     if len(zone_selection) > 10:
         st.sidebar.write('Solo se visualizan los datos de diez zonas.')
         zone_selection = zone_selection[:10]
-    time_beginning = st.sidebar.select_slider('Elige fecha de inicio para el gráfico (año-mes-día)', dates_as_list[:])
+    time_beginning = st.sidebar.select_slider('Elige fecha de inicio para el gráfico (año-mes-día)', dates_as_list[:], value=dates_as_list[-26])
     start_index = dates_as_list.index(time_beginning)
     time_ending = st.sidebar.select_slider('Elige fecha final para el gráfico (año-mes-día)', dates_as_list[start_index+1:], value=dates_as_list[-1])
     end_index = dates_as_list.index(time_ending)
-
 
     # Información sobre zonas seleccionadas
     if len(zone_selection) == 1:
@@ -134,8 +131,6 @@ if data is not None:
         Ysel = data[data['zona_basica_salud'] == selection]['tasa_incidencia_acumulada_ultimos_14dias'][::-1]
         Ysel = Ysel[start_index:end_index+1]
         plt.plot(X, Ysel, label=selection)
-
-
     plt.ylabel('Casos por cien mil habitantes en los últimos 14 días', fontsize=18.0)
     plt.xlabel('Fecha (año/mes)', fontsize=18.0)
     plt.yticks(fontsize=14.0)
