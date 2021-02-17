@@ -37,6 +37,7 @@ otras zonas y con la media entre las zonas.''')
 st.markdown('''Utiliza los selectores para elegir la zona. También puedes especificar fechas 
 para el gráfico.''')
 st.markdown('En un móvil pulse la flecha a la izquierda para ver los selectores.')
+st.markdown('Los datos se actualizan semanalmente.')
 st.markdown('***')
 
 # Recuperación de los datos y su procesamiento
