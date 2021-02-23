@@ -1,6 +1,7 @@
 import pandas as pd
 import streamlit as st
 import matplotlib.pyplot as plt
+import altair as alt
 import datetime
 from bs4 import BeautifulSoup
 import requests
@@ -32,8 +33,8 @@ def restricted_zones():
 # Título más presentación de la app; indicaciones de uso
 st.title('Incidencia del covid-19 en Madrid')
 st.markdown('''Con esta aplicación puedes ver facilmente los últimos datos de la incidencia
-del Covid-19 por zonas básicas de Salud de Madrid, y si hay restricciones en vigor en la zona. En el gráfico puedes comparar las cifras con
-otras zonas y con la media entre las zonas.''')
+del Covid-19 por zonas básicas de Salud de Madrid, y si hay restricciones en vigor en la zona. En los gráficos puedes comparar las cifras con
+otras zonas y con la media entre las zonas, y ver la relación entre acumulación de casos reciente y total.''')
 st.markdown('''Utiliza los selectores para elegir la zona. También puedes especificar fechas 
 para el gráfico.''')
 st.markdown('En un móvil pulse la flecha a la izquierda para ver los selectores.')
@@ -139,6 +140,17 @@ if data is not None:
     plt.legend(fontsize=14.0)
 
     st.pyplot(plt)
+
+    # Scatter plot
+    scatter = alt.Chart(most_recent, height=400).mark_point().encode(
+        alt.X('tasa_incidencia_acumulada_total', axis=alt.Axis(title='Incidencia Acumulada Total', titleFontSize=14, 
+        titleFontWeight=500, labelFontSize=11)),
+        alt.Y('tasa_incidencia_acumulada_ultimos_14dias', axis=alt.Axis(title='Incidencia Acumulada Últimos 14 Días', 
+        titleFontSize=14, titleFontWeight=500, labelFontSize=11)),
+        tooltip='zona_basica_salud')
+    st.header('Relación por incidencia acumulado total y reciente')
+    st.write()
+    st.altair_chart(scatter, use_container_width=True)
 
     st.markdown('Fuente: Comunidad de Madrid')
 
