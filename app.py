@@ -142,14 +142,13 @@ if data is not None:
     st.pyplot(plt)
 
     # Scatter plot
-    scatter = alt.Chart(most_recent, height=400).mark_point().encode(
-        alt.X('tasa_incidencia_acumulada_total', axis=alt.Axis(title='Incidencia Acumulada Total', titleFontSize=14, 
-        titleFontWeight=500, labelFontSize=11)),
-        alt.Y('tasa_incidencia_acumulada_ultimos_14dias', axis=alt.Axis(title='Incidencia Acumulada Últimos 14 Días', 
-        titleFontSize=14, titleFontWeight=500, labelFontSize=11)),
-        tooltip='zona_basica_salud')
+    x_style = alt.Axis(title='Incidencia Acumulada Total', titleFontSize=14, titleFontWeight=500, labelFontSize=11)
+    y_style = alt.Axis(title='Incidencia Acumulada Últimos 14 Días', titleFontSize=14, titleFontWeight=500, labelFontSize=11)
+    x_axis = alt.X('tasa_incidencia_acumulada_total', axis=x_style)
+    y_axis = alt.Y('tasa_incidencia_acumulada_ultimos_14dias', axis=y_style)
+    scatter = alt.Chart(most_recent, height=400).mark_point().encode(x_axis, y_axis, tooltip='zona_basica_salud')
     st.header('Relación por incidencia acumulado total y reciente')
-    st.write()
+    st.write('')
     st.altair_chart(scatter, use_container_width=True)
 
     st.markdown('Fuente: Comunidad de Madrid')
