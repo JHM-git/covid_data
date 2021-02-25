@@ -2,3 +2,4 @@ streamlit
 matplotlib
 beautifulsoup4
 altair
+numpy

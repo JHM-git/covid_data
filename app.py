@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import streamlit as st
 import matplotlib.pyplot as plt
 import altair as alt
@@ -142,11 +143,23 @@ if data is not None:
     st.pyplot(plt)
 
     # Scatter plot
+    # Crear columna 'selected' para el gráfico
+    zeros = np.zeros(286, dtype=np.int16)
+    scatter_data = most_recent.copy()
+    scatter_data['selected'] = zeros
+    for item in zone_selection:
+        scatter_data.loc[scatter_data['zona_basica_salud'] == item, 'selected'] = 1
     x_style = alt.Axis(title='Incidencia Acumulada Total', titleFontSize=14, titleFontWeight=500, labelFontSize=11)
     y_style = alt.Axis(title='Incidencia Acumulada Últimos 14 Días', titleFontSize=14, titleFontWeight=500, labelFontSize=11)
     x_axis = alt.X('tasa_incidencia_acumulada_total', axis=x_style)
     y_axis = alt.Y('tasa_incidencia_acumulada_ultimos_14dias', axis=y_style)
-    scatter = alt.Chart(most_recent, height=400).mark_point().encode(x_axis, y_axis, tooltip='zona_basica_salud')
+    color_style = alt.Color('selected', legend=None, scale=alt.Scale(range=['#727DF7', '#CF1006']))
+    size_style = alt.Size('selected', legend=None, scale=alt.Scale(range=[30, 60]))
+    opacity_style = alt.Opacity('selected', legend=None, scale=alt.Scale(range=[0.7, 1]))
+    scatter = alt.Chart(scatter_data, height=400).mark_point().encode(x_axis, y_axis, tooltip='zona_basica_salud')
+    if len(zone_selection) > 0:
+        scatter = alt.Chart(scatter_data, height=400).mark_point().encode(x_axis, y_axis, tooltip='zona_basica_salud', 
+        color=color_style, size=size_style, opacity=opacity_style)
     st.header('Relación por incidencia acumulado total y reciente')
     st.write('')
     st.altair_chart(scatter, use_container_width=True)
