@@ -156,10 +156,11 @@ if data is not None:
     color_style = alt.Color('selected', legend=None, scale=alt.Scale(range=['#727DF7', '#CF1006']))
     size_style = alt.Size('selected', legend=None, scale=alt.Scale(range=[30, 60]))
     opacity_style = alt.Opacity('selected', legend=None, scale=alt.Scale(range=[0.7, 1]))
-    scatter = alt.Chart(scatter_data, height=400).mark_point().encode(x_axis, y_axis, tooltip='zona_basica_salud')
     if len(zone_selection) > 0:
         scatter = alt.Chart(scatter_data, height=400).mark_point().encode(x_axis, y_axis, tooltip='zona_basica_salud', 
         color=color_style, size=size_style, opacity=opacity_style)
+    else:
+        scatter = alt.Chart(scatter_data, height=400).mark_point().encode(x_axis, y_axis, tooltip='zona_basica_salud')
     st.header('Relación por incidencia acumulado total y reciente')
     st.write('')
     st.altair_chart(scatter, use_container_width=True)
