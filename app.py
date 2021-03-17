@@ -95,9 +95,15 @@ if data is not None:
     latest_date = f'{latest_date[-2:]}/{latest_date[-5:-3]}/{latest_date[:-6]}'
 
     for selection in zone_selection:
-        selection_info = most_recent[most_recent['zona_basica_salud'] == selection]
-        last_two_weeks = selection_info['tasa_incidencia_acumulada_ultimos_14dias'].values[0]
-        previous_week = data['tasa_incidencia_acumulada_ultimos_14dias'][(data['fecha_informe'] == DATES[-2]) & (data['zona_basica_salud'] == selection)].values[0]
+        selection_info = most_recent[most_recent['zona_basica_salud'] == selection].copy()
+        selection_info.fillna(0, inplace=True)
+        previous_week = None
+        try:
+            last_two_weeks = selection_info['tasa_incidencia_acumulada_ultimos_14dias'].values[0]
+            previous_week = data['tasa_incidencia_acumulada_ultimos_14dias'][(data['fecha_informe'] == DATES[-2]) & (data['zona_basica_salud'] == selection)].values[0]
+        except:
+            st.markdown(f'Hay un problema con los datos de {selection}')
+            continue
         difference = round((last_two_weeks - previous_week) / previous_week * 100, 1)
         change = ''
         if difference > 0:
